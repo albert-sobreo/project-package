@@ -1,0 +1,31 @@
+{% extends "base-template.html" %}
+{% block title %}TEST{% endblock %}
+
+
+{% block body %}
+
+<div id="app" v-cloak>
+    <!-- INSERT NAVIGATION BAR HERE -->
+    <navbar-gas active="nav-reports" photo="/static/media/profile-pictures/person.png"></navbar-gas>
+    <navbar-imps active='nav-inventory' photo="/static/media/profile-pictures/person.png"></navbar-imps>
+    <navbar-ems photo="/static/media/profile-pictures/person.png"></navbar-ems>
+    <profile-card first_name="{{request.user.first_name}}" last_name="{{request.user.last_name}}" position="{{request.user.position}}" auth_level="{{request.user.authLevel}}" photo="/static/media/profile-pictures/person.png/"></profile-card>
+    <app-card></app-card>
+
+    <!-- MAIN BODY -->
+    <div>
+        <h1>HELLO WORLD</h1>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    var app = new Vue({
+        delimiters: ['[[', ']]'],
+        el: "#app"
+    })
+</script>
+{% endblock %}
