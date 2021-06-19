@@ -1,0 +1,548 @@
+{% extends "base-template.html" %}
+{% block title %}TEST{% endblock %}
+
+
+{% block body %}
+
+<div id="app" v-cloak>
+    <!-- INSERT NAVIGATION BAR HERE -->
+    <navbar-gas active="nav-purchase" photo="/media/{{request.user.image}}"></navbar-gas>
+    <app-card></app-card>
+    <profile-card first_name="{{request.user.first_name}}" last_name="{{request.user.last_name}}" position="{{request.user.position}}" auth_level="{{request.user.authLevel}}" photo="/media/{{request.user.image}}/"></profile-card>
+
+    <!-- MAIN BODY -->
+
+    <!-- navigation 2 -->
+    <div class="container">
+      <div class="d-flex font-semibold mb-2 justify-content-center">
+          <div class="justify-content-center c-nav-links gas-nav">
+              <a href="/sales-contract/" class="active-gas mx-2">Create</a>
+              <a href="/po-list/" class="mx-2">PO List</a>
+          </div>
+      </div>
+
+      <!-- TITLE AND BUTTONS -->
+        <div class="d-flex align-items-center mb-3">
+          <span class="font-size-18 font-bold mr-1">Purchase Order</span>
+      </div>
+
+       <!-- SALES CONTRACT -->
+       <div>
+        <!-- REFERENCE -->
+        <div class="row">
+            <div class="col col-3 pr-2">
+                <label>Reference No.</label>
+                <input type="text" v-model="salesContract.code" class="form-control" name="code" placeholder="Enter Reference No." readonly>
+            </div>
+            <div class="col col-2 px-2">
+                <label>Date</label>
+                <input type="date" v-model="salesContract.date" class="form-control" name="date" readonly>
+            </div>
+            <div class="col col-2 px-2">
+              <label>Retroactive <small class="text-muted font-weight-bold">(optional)</small></label>
+              <input type="date" v-model="salesContract.date" class="form-control" name="date">
+            </div>
+        </div>
+
+        <!-- CUSTOMER -->
+        <div class="row mt-2 mb-4">
+            <div class="col col-5 pr-2">
+                <label>Vendor</label>
+                <select v-model="salesContract.customer" class="form-control">
+                    <option value="" selected disabled>xxxxx xxxxx shop</option>
+                    <option v-for="customer in customers" :value="customer.id">[[customer.name]]</option>
+                </select>
+            </div>
+            <div class="col col-2 px-2">
+                <label>Purchase request</label>
+                <select v-model='salesContract.taxType' class="form-control">
+                    <option value="" selected disabled>PR-xxxx-xx-xxxx</option>
+                    <option value="VAT">xx-xxxx-xx-xxxx</option>
+                    <option value="VAT">xx-xxxx-xx-xxxx</option>
+                    <option value="VAT">xx-xxxx-xx-xxxx</option>
+                </select>
+            </div>
+            <div class="col-2 pl-1 mt-4">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                <label class="form-check-label" for="defaultCheck1">
+                  No Purchase request
+                </label>
+              </div>
+            </div>
+        </div>
+      
+
+
+       <!-- SALES ITEMS AND DETAILS -->
+       <div class="container-extend px-5 py-4 b-tr-radius-15 b-tl-radius-15 order-card mt-3">
+        <div class="row">
+            <div class="col-2 px-1">
+                <label class="m-0">Account</label>
+            </div>
+            <div class="col-4 px-1">
+                <label class="m-0">Item Code - Item name</label>
+            </div>
+            <div class="col-1 px-1">
+                <label class="m-0">Qty</label>
+            </div>
+            <div class="col px-1">
+                <label class="m-0">VATable Amount</label>
+            </div>
+            <div class="col px-1">
+                <label class="m-0">Input VAT</label>
+            </div>
+            <div class="col px-1">
+                <label class="m-0">Total Amount</label>
+            </div>
+            <i class="fas fa-minus-circle stop" style="color:rgba(0,0,0,0)"></i>
+        </div>
+        
+         <!-- V-FOR ITEMS -->
+         <div class="row" v-for="(item, index) in salesContract.items">
+          <div class="col-2 px-1">
+              <select @change="getAll(item.code, index)" v-model="item.code" class="form-control">
+                  <option value="" selected disabled>Choose Item</option>
+                  <option value="">xxxxx</option>
+                  <option value="">xxxxx</option>
+                  <option v-for="merch in merchItems" :value="merch.id">[[merch.code]] - [[merch.classification]] [[merch.type]] - [[roundNumber0(merch.length)]]x[[roundNumber0(merch.width)]]x[[roundNumber0(merch.thickness)]]</option>
+              </select>
+          </div>
+          <div class="col-4 px-1">
+            <select @change="getAll(item.code, index)" v-model="item.code" class="form-control">
+                <option value="" selected disabled>Choose Item</option>
+                <option value="">xxxxx</option>
+                <option value="">xxxxx</option>
+                <option v-for="merch in merchItems" :value="merch.id">[[merch.code]] - [[merch.classification]] [[merch.type]] - [[roundNumber0(merch.length)]]x[[roundNumber0(merch.width)]]x[[roundNumber0(merch.thickness)]]</option>
+            </select>
+        </div>
+          <div class="col-1 px-1">
+              <input v-model="item.quantity" @change="onForTotalCost(index)" type="number" class="form-control">
+          </div>
+          <div class="col px-1">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                  <span class="input-group-text">₱</span>
+              </div>
+                <input v-model="item.fee" type="number" step="0.01" class="form-control box-shadow-off">
+            </div>
+          </div>
+          <div class="col px-1">
+              <input v-model="salesContract.discount" type="number" step="0.01" class="form-control">
+          </div>
+          <div class="col px-1">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                  <span class="input-group-text">₱</span>
+              </div>
+              <input v-model="item.total" type="number" step="0.01" class="form-control box-shadow-off" readonly>
+          </div>
+          </div>
+          <i @click="removeItem(index)" class="fas fa-minus-circle stop text-shadow-small" style="line-height: 30px;"></i>
+      </div>
+      <!-- ADD NEW LINE -->
+      <div class="row">
+          <div class="col px-1">
+              <button @click="addItemLine()" class="btn btn-warning my-1" type="button">+ Add New Line</button>
+          </div>
+        </div>
+
+
+
+       <!-- DELIVERY FEES AND AMOUNT -->
+    <div class="row mt-3 bg-white ">
+        <div class="col-5 pl-0">
+            <div class="p-3">
+                <div class="row">
+                    <div class="col-3 px-1">
+                        <label>ATC Code</label>
+                    </div>
+                    <div class="col-3 px-1">
+                        <label>Amount</label>
+                    </div>
+                    <div class="col-3 px-1">
+                      <label>Tax Rate</label>
+                    </div>
+                    <div class="col-3 px-1">
+                        <label>Amount Withheld</label>
+                    </div>
+                </div>
+                <div class="row" v-for="(item, index) in salesContract.otherFees">
+                    <div class="col-3 px-1">
+                        <div class="input-group">
+                          <select v-model='salesContract.taxType' class="form-control box-shadow-off">
+                            <option value="" selected disabled>Select</option>
+                            <option value="VAT">xxxxx</option>
+                            <option value="VAT">xxxxx</option>
+                            <option value="VAT">xxxxx</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-3 px-1">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">₱</span>
+                        </div>
+                          <input v-model="item.fee" type="number" step="0.01" class="form-control box-shadow-off">
+                      </div>
+                    </div>
+                    <div class="col-3 px-1">
+                      <input v-model="item.quantity" @change="onForTotalCost(index)" type="number" class="form-control" readonly>
+                    </div>
+                    <div class="col-3 px-1">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">₱</span>
+                        </div>
+                          <input v-model="item.fee" type="number" step="0.01" class="form-control box-shadow-off" readonly>
+                      </div>
+                    </div>
+                </div>
+                <!-- ADD NEW LINE -->
+                <div class="row">
+                    <div class="col px-1">
+                        <button @click="addFeeLine()" class="btn btn-warning my-1" type="button">+ Add New ATC</button>
+                    </div>
+                </div>
+
+                <!-- REMARKS -->
+                <div class="row mt-3">
+                    <div class="col px-1">
+                        <label>Remarks</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col px-1">
+                        <textarea type="text"  class="form-control" placeholder="Enter Remarks" rows="3">
+                            </textarea>
+                    </div>
+                </div>
+                
+                <!-- POSTED -->
+                <div class="row mt-3">
+                    <div class="col px-1">
+                        <label>Posted By</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 px-1">
+                        <input type="text"  class="form-control" placeholder="Juan Dela Cruz" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TOTALS -->
+        <div class="col-5 p-4 pr-0 offset-1 btn-warning">
+            <!-- label 1 -->
+            <div class="row">
+                <div class="col px-1">
+                    <label>Amount Due</label>
+                </div>
+                <div class="col px-1">
+                    <label>Amount Paid</label>
+                </div>     
+            </div>
+            <!-- total 1 -->
+            <div class="row">
+            <div class="col px-1">
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                      <span class="input-group-text">₱</span>
+                  </div>
+                    <input  type="number" step="0.01" class="form-control box-shadow-off" readonly>
+                </div>
+            </div>
+            <div class="col px-1">
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                      <span class="input-group-text">₱</span>
+                  </div>
+                    <input type="number" step="0.01" class="form-control box-shadow-off">
+                </div>
+            </div>
+            </div>
+            <!-- label 2 -->
+            <div class="row mt-2">
+                <div class="col px-1">
+                    <label>Payment Method</label>
+                </div>   
+            </div>
+            <!-- label 2 -->
+            <div class="row">
+                <div class="col px-1">
+                    <div class="input-group">
+                      <select class="form-control box-shadow-off">
+                        <option value="" selected disabled>Select</option>
+                        <option value="VAT">xxxxx</option>
+                        <option value="VAT">xxxxx</option>
+                        <option value="VAT">xxxxx</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col px-1 mt-2">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">
+                        <label class="form-check-label" for="inlineRadio1">Full Payment</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">
+                        <label class="form-check-label" for="inlineRadio2">Partial Payment</label>
+                      </div>
+                </div>
+            </div>
+        </div>  
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+      var app = new Vue({
+        delimiters: ['[[', ']]'],
+        el: "#app",
+
+        data:{
+            config:{
+                headers: {
+                    "X-CSRFToken": getCookie('csrftoken')
+                }
+            },
+            salesContract: {
+                code: '{{new_code}}',
+                date: new Date().toISOString().split('T')[0],
+                dateTimeCreated: new Date().toISOString(),
+                customer: '',
+                taxType: '',
+                taxRate: '',
+                items: [{
+                    code: null,
+                    remaining: null,
+                    quantity: null,
+                    ppc: null,
+                    vol: null,
+                    cbm: null,
+                    total: 0,
+                }],
+                otherFees: [{
+                    fee: 0,
+                    description: null
+                }],
+                subTotal: 0,
+                discountType: 'percent',
+                discount: 0,
+                totalDiscount: 0,
+                tax: 0,
+                total: 0,
+            },
+            merchItems: [],
+            customers: [],
+            errors: []
+
+        },
+
+        computed:{
+            itemTotal(){
+                return this.salesContract.items.map(item=>item.total)
+            },
+            otherFeesTotal(){
+                return this.salesContract.otherFees.map(item=>item.fee)
+            },
+            discount(){
+                return this.salesContract.discount
+            },
+            discountType(){
+                return this.salesContract.discountType
+            },
+            taxRate(){
+                return this.salesContract.taxRate
+            },
+            subTotal(){
+                return this.salesContract.subTotal
+            }
+        },
+
+        watch:{
+            subTotal(){
+                this.salesContract.tax = (this.salesContract.taxRate/100) * this.salesContract.subTotal
+                this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+            },
+            taxRate(){
+                this.salesContract.tax = (this.salesContract.taxRate/100) * this.salesContract.subTotal
+                this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+            },
+            otherFeesTotal(){
+                this.salesContract.subTotal = ((this.itemTotal.reduce((a,b)=>Number(a)+Number(b),0)) + (this.otherFeesTotal.reduce((a,b)=>Number(a)+Number(b),0)))
+                this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+            },
+            itemTotal(){
+                console.log('i was here')
+                this.salesContract.subTotal = ((this.itemTotal.reduce((a,b)=>Number(a)+Number(b),0)) + (this.otherFeesTotal.reduce((a,b)=>Number(a)+Number(b),0)))
+                this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+            },
+            discount(){
+                if (this.salesContract.discountType == 'percent'){
+                    this.salesContract.totalDiscount = (this.salesContract.subTotal*(this.salesContract.discount / 100))
+                    this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+                }
+                else if (this.salesContract.discountType == 'peso'){
+                    this.salesContract.totalDiscount = this.salesContract.discount
+                    this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+                }
+            },
+            discountType(){
+                if (this.salesContract.discountType == 'percent'){
+                    this.salesContract.totalDiscount = (this.salesContract.subTotal*(this.salesContract.discount / 100))
+                    this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+                }
+                else if (this.salesContract.discountType == 'peso'){
+                    this.salesContract.totalDiscount = this.salesContract.discount
+                    this.salesContract.total = this.salesContract.subTotal - this.salesContract.totalDiscount + this.salesContract.tax
+                }
+            }
+        },
+
+        methods: {
+            loadData(){
+                axios.get('/api/merchinventory/')
+                .then(res=>this.merchItems = res.data)
+
+                axios.get('/api/customer/')
+                .then(res=>this.customers = res.data)
+            },
+
+            checkForm(){
+                if (
+                    this.salesContract.code &&
+                    this.salesContract.date &&
+                    this.salesContract.customer &&
+                    this.salesContract.taxType &&
+                    this.salesContract.taxRate &&
+                    this.salesContract.subTotal &&
+                    this.salesContract.discount
+                    ){
+                    this.submit()
+                    return false
+                }
+                this.errors = []
+                if(!this.salesContract.code){
+                    this.errors.push('Code Required')
+                }
+                if(!this.salesContract.date){
+                    this.errors.push('Date Required')
+                }
+                if(!this.salesContract.customer){
+                    this.errors.push('Customer Required')
+                }
+                if(!this.salesContract.taxType){
+                    this.errors.push('Tax Type Required')
+                }
+                if(!this.salesContract.taxRate){
+                    this.errors.push('Tax Rate Required')
+                }
+                if(!this.salesContract.subTotal){
+                    this.errors.push('Sub Total Required')
+                }
+                if(!this.salesContract.discount){
+                    this.errors.push('Discount Required')
+                }
+
+                Swal.fire({
+                    title: "Unfilled Inputs",
+                    html: this.errors.join('<br>'),
+                    icon: 'warning'
+                })
+            },
+            
+            addItemLine(){
+                this.salesContract.items.push({
+                    code: '',
+                    remaining: null,
+                    quantity: null,
+                    pricePerCubic: null,
+                    vol: null,
+                    cbm: null,
+                    total: 0,
+                })
+            },
+            addFeeLine(){
+                this.salesContract.otherFees.push({
+                    fee: null,
+                    description: null
+                })
+            },
+
+            getAll(id, index){
+                item = this.merchItems.find(x=>x.id==id)
+                this.salesContract.items[index].remaining = item.qtyA
+                this.salesContract.items[index].vol = this.roundNumber4(item.vol)
+                this.salesContract.items[index].pricePerCubic = this.roundNumber2(item.pricePerCubic)
+            },
+
+            removeItem(index){
+                this.$delete(this.salesContract.items, index)
+            },
+
+            removeFee(index){
+                this.$delete(this.salesContract.otherFees, index)
+            },
+
+            roundNumber0(value){
+                let val = (value/1).toFixed(0)
+                return val
+            },
+
+            roundNumber2(value) {
+                let val = (value/1).toFixed(2)
+                return val
+            },
+
+            roundNumber4(value) {
+                let val = (value/1).toFixed(4)
+                return val
+            },
+            onForTotalCost(index){
+                row = this.salesContract.items[index]
+                row.total = Number((row.vol * row.pricePerCubic * row.quantity)).toFixed(2)
+            },
+            submit(){
+                axios.post('/save-temp-sc/', this.salesContract, this.config)
+                .then(res=>res.data==0?location.reload():'')
+            },
+            salesContractInitial(){
+                return {
+                    code: '{{new_code}}',
+                    date: new Date().toISOString().split('T')[0],
+                    dateTimeCreated: new Date().toISOString(),
+                    customer: '',
+                    taxType: '',
+                    taxRate: '',
+                    items: [{
+                        code: '',
+                        remaining: null,
+                        quantity: null,
+                        ppc: null,
+                        vol: null,
+                        cbm: null,
+                        total: 0,
+                    }],
+                    otherFees: [{
+                        fee: 0,
+                        description: null
+                    }],
+                    subTotal: 0,
+                    discountType: 'percent',
+                    discount: 0,
+                    totalDiscount: 0,
+                    tax: 0,
+                    total: 0,
+                }
+            }
+        },
+        mounted(){
+            this.loadData()
+        }
+    })
+</script>
+{% endblock %}

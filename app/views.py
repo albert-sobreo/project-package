@@ -9,3 +9,15 @@ def TestNavView(request):
 
 def InventoryView(request):
     return render(request, 'merchinventory.html')
+
+def SalesView(request):
+    return render(request, 'sales-contract.html')
+
+def OrderView(requests):
+    return render(requests, 'purchase-order.html')
+
+def NekoView(request):
+    return render(request, 'blackcat.html')
+
+def RequestView(request):
+    return render(request, 'purchase-request.html')
