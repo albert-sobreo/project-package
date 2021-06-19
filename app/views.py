@@ -21,3 +21,6 @@ def NekoView(request):
 
 def RequestView(request):
     return render(request, 'purchase-request.html')
+
+def ReportView(request):
+    return render(request, 'receiving-report.html')

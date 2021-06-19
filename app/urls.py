@@ -9,5 +9,6 @@ urlpatterns = [
     path('sales/', views.SalesView),
     path('order', views.OrderView),
     path('neko/', views.NekoView),
-    path('request/', views.RequestView)
+    path('request/', views.RequestView),
+    path('report', views.ReportView)
 ]
