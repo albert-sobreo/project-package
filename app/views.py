@@ -24,3 +24,6 @@ def RequestView(request):
 
 def ReportView(request):
     return render(request, 'receiving-report.html')
+
+def ReportlistView(request):
+    return render(request, 'rr-list.html')
