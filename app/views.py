@@ -27,3 +27,6 @@ def ReportView(request):
 
 def ReportlistView(request):
     return render(request, 'rr-list.html')
+
+def SalesorderView(request):
+    return render(request, 'sales-order.html')
