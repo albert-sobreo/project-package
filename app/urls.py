@@ -12,5 +12,6 @@ urlpatterns = [
     path('request/', views.RequestView),
     path('report/', views.ReportView),
     path('reportlist/', views.ReportlistView),
-    path('salesorder/', views.SalesorderView)
+    path('salesorder/', views.SalesorderView),
+    path('saleslist/', views.SaleslistView)
 ]
