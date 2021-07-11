@@ -10,6 +10,9 @@ def TestNavView(request):
 def InventoryView(request):
     return render(request, 'merchinventory.html')
 
+def DeliveriesView(request):
+    return render(request, 'deliveries.html')
+
 def SalesView(request):
     return render(request, 'sales-contract.html')
 
@@ -33,3 +36,6 @@ def SaleslistView(request):
 
 def SalesorderView(request):
     return render(request, 'sales-order.html')
+
+def TransferView(request):
+    return render(request, 'inventory-transfer.html')
