@@ -15,5 +15,6 @@ urlpatterns = [
     path('reportlist/', views.ReportlistView),
     path('salesorder/', views.SalesorderView),
     path('saleslist/', views.SaleslistView),
-    path('transfer/', views.TransferView)
+    path('transfer/', views.TransferView),
+    path('adjustments/', views.AdjustmentsView)
 ]

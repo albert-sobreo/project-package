@@ -39,3 +39,6 @@ def SalesorderView(request):
 
 def TransferView(request):
     return render(request, 'inventory-transfer.html')
+
+def AdjustmentsView(request):
+    return render(request, 'inventory-adjustments.html')

@@ -1,0 +1,466 @@
+{% extends "base-template.html" %}
+{% block title %}Inventory Adjustments{% endblock %}
+
+
+{% block body %}
+
+<div id="app" v-cloak> <!-- #app -->
+        <!-- NAVIGATION BAR -->
+        <navbar-imps active="nav-adjustments" photo="/media/{{request.user.image}}"></navbar-imps>
+        <app-card></app-card>
+        <profile-card first_name="{{request.user.first_name}}" last_name="{{request.user.last_name}}" position="{{request.user.position}}" auth_level="{{request.user.authLevel}}" photo="/media/{{request.user.image}}/"></profile-card>
+        <!-- END NAVIGATION -->
+
+
+    <!-- MAIN BODY -->
+    <div class="container"><!-- .container -->
+      <!-- TITLE AND BUTTONS -->
+      <div class="d-flex align-items-center mb-3">
+        <span class="font-size-18 font-bold mr-1 mt-3">Inventory Adjustments</span>
+      </div>
+      <!-- END TITLE AND BUTTONS -->
+
+      <div> <!-- TRANSFER -->
+        <!-- REF NO AND DATES -->
+        <div class="row">
+          <div class="col col-3 pr-2">
+              <label>Reference No.</label>
+              <input v-model="purchaseOrder.code" type="text" class="form-control" name="code" placeholder="Enter Reference No."a>
+          </div>
+          <div class="col col-2 px-2">
+              <label>Date</label>
+              <input v-model="purchaseOrder.date" type="date" class="form-control" name="date">
+          </div>
+        </div>
+        <!-- END REF NO AND DATES -->
+        <!-- ITEMS AND DETAILS -->
+         <div class="container-extend px-5 py-4 b-tr-radius-15 b-tl-radius-15 order-card mt-3">
+          <div class="row">
+              <div class="col-7 px-1">
+                  <label for="code" class="m-0">Item-Code - Item name</label>
+              </div>
+              <div class="col-1 px-1">
+                  <label for="remaining" class="m-0">Remaining</label>
+              </div>
+              <div class="col px-1">
+                  <label for="order-quantity" class="m-0">Quantity</label>
+              </div>
+              <div class="col px-1">
+                  <label for="order-quantity" class="m-0">Unit Cost</label>
+              </div>
+              <div class="col px-1">
+                  <label for="Total Cost" class="m-0">Lost</label>
+              </div>
+              <i class="fas fa-minus-circle stop" style="color:rgba(0,0,0,0)"></i>
+          </div>
+          <!-- V-FOR ITEMS -->
+          <div class="row" v-for="(item, index) in purchaseOrder.items">
+              <div class="col-7 px-1">
+                  <select v-model="item.type" class="form-control">
+                      <option value="" selected disabled>Choose Type</option>
+                      <option v-for="type in inventoryTypes" :value="type">[[type]]</option>
+                  </select>
+              </div>
+
+              <div class="col-1 px-1">
+                  <input v-model="item.remaining" type="number" class="form-control" readonly>
+              </div>
+              <div class="col px-1">
+                  <input v-model="item.quantity" @change="onForTotalCost(index)" type="number" class="form-control" min="0">
+              </div>
+              <div class="col px-1">
+                  <div class="input-group">
+                      <div class="input-group-prepend">
+                          <span class="input-group-text">₱</span>
+                      </div>
+                      <input v-model="item.vatable" @change="onForTotalCost(index)" type="number" step="0.01" class="form-control box-shadow-off" min="0" readonly>
+                  </div>
+              </div>
+              <div class="col px-1">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">₱</span>
+                    </div>
+                    <input v-model="item.vatable" @change="onForTotalCost(index)" type="number" step="0.01" class="form-control box-shadow-off" min="0" readonly>
+                </div>
+            </div>
+              <i @click="remove(index)" class="fas fa-minus-circle stop text-shadow-small" style="line-height: 30px;"></i>
+          </div>
+          <!-- ADD NEW LINE -->
+          <div class="row">
+              <div class="col px-1">
+                  <button @click="addLine()" class="btn btn-warning my-1" type="button">+ Add New Line</button>
+              </div>
+          </div>
+          <!-- END ADD NEW LINE -->
+
+
+
+
+          <!-- WAREHOUSE, REMARKS -->
+          <div class="row mt-2">
+              <!-- WAREHOUSE -->
+              <div class="col pl-0"> <!-- .column -->
+                  <div class="p-4 order-card-darker b-radius-15"> <!-- card -->
+                      <div class="d-flex row">
+                          <div class="col-3 px-1">
+                              <label>Type of Adjustments</label>
+                          </div>
+                          <div class="col-3 px-1">
+                            <label>Attach a Photo</label>
+                          </div>
+                          <div class="col-3 px-1 ml-auto">
+                            <label>Total Lost</label>
+                          </div>
+                      </div>
+                      <div class="d-flex row" v-for="(line, index) in purchaseOrder.atc">
+                          <div class="col-3 px-1">
+                              <select v-model="line.code" class="form-control" @change="setATCRate(line.code, index)">
+                                  <option value="">None</option>
+                                  <optgroup v-for="atcGroup in formattedATCList" :label="atcGroup.name">
+                                      <option v-for="atc in atcGroup.list" :value="atc.id">[[atc.code]]</option>
+                                  </optgroup>
+                              </select>
+                          </div>
+                          <div class="col-3 px-1">
+                            <input type="file" class="form-control-file" id="exampleFormControlFile1">
+                            <span class="font-size-10 font-bold" style="color: red;">*not working yet</span>
+                          </div>
+                          <div class="col-3 px-1 ml-auto">
+                            <div class="input-group">
+                              <div class="input-group-prepend">
+                                  <span class="input-group-text">₱</span>
+                              </div>
+                              <input type="text" :value="formatPrice(purchaseOrder.amountTotal)" class="form-control box-shadow-off" readonly>
+                          </div>
+                          </div>
+                      </div>
+              <!-- END WAREHOUSE -->
+                  </div> <!-- card -->
+              </div><!-- .column -->
+          </div> <!-- END WAREHOUSE, REMARKS -->
+
+
+
+
+
+      </div> <!-- END ITEMS AND DETAILS -->
+      <div @click="checkForm()" class="container-extend border container-extend btn-bottom">
+          Request Transfer
+      </div>
+        <!-- END ITEMS AND DETAILS -->
+      </div><!-- END TRANSFER -->
+    </div><!-- END .container -->
+
+
+
+
+</div><!-- END #app -->
+
+{% endblock %}
+{% block scripts %}
+<!-- SCRIPT FROM PURCHASE-ORDER . HTML -->
+<script>
+  var app = new Vue({
+      delimiters: ['[[', ']]'],
+      el: "#app",
+
+      data:{
+          config:{
+              headers: {
+                  "X-CSRFToken": getCookie('csrftoken')
+              }
+          },
+          inventoryTypes: [
+              'Merchandise',
+              'Manufacturing'
+          ],
+          purchaseOrder:{
+              code: '{{new_code}}',
+              date: new Date().toISOString().split('T')[0],
+              dateTimeCreated: new Date().toISOString(),
+              retroactive: null,
+              vendor: '',
+              taxType: '',
+              taxRate: '',
+              items: [{
+                  type: '',
+                  code: '',
+                  remaining: null,
+                  quantity: null,
+                  vatable: 0.00,
+                  inputVAT: 0,
+                  totalCost: null
+              }],
+              atc: [{
+                  code: '',
+                  amount: 0,
+                  taxRate: 0,
+                  amountWithheld: 0,
+              }],
+              taxPeso: 0,
+              withholdingTax: 0,
+              remarks: null,
+              amountDue: '0',
+              amountTotal: 0,
+              amountPaid: null,
+              paymentMethod: '',
+              paymentPeriod: null,
+              chequeNo: null,
+              dueDate: null,
+              bank: null,
+          },
+          vendor: [],
+          merchandiseInventory: [],
+          atcList: [],
+          formattedATCList: [],
+          errors: []
+
+      },
+      computed: {
+          amountDue(){
+              return this.purchaseOrder.items.map(item=>item.totalCost)
+          },
+
+          amountPaid(){
+              return Number(this.purchaseOrder.amountPaid)
+          },
+          amountDue2(){
+              return Number(this.purchaseOrder.amountDue)
+          },
+          amountTotal(){
+              return Number(this.purchaseOrder.amountTotal)
+          },
+          amountWithheld(){
+              return this.purchaseOrder.atc.map(item=>item.amountWithheld)
+          },
+          taxRate(){
+              return Number(this.purchaseOrder.taxRate)
+          }
+      },
+
+      watch: {
+          amountDue(){
+              this.purchaseOrder.amountDue = (this.amountDue.reduce((a, b)=>Number(a)+Number(b), 0)).toFixed(5)
+              this.purchaseOrder.atc.forEach(item=>{
+                  item.amount = Number(this.purchaseOrder.amountDue).toFixed(2)
+              })
+
+              this.purchaseOrder.amountTotal = this.purchaseOrder.amountDue - (this.amountWithheld.reduce((a,b)=>Number(a)+Number(b),0)).toFixed(5)
+              this.purchaseOrder.taxPeso = (Number(this.amountTotal) * Number(this.taxRate/100))
+              this.purchaseOrder.withholdingTax = (this.amountWithheld.reduce((a,b)=>Number(a)+Number(b),0)).toFixed(5)
+              this.purchaseOrder.atc[0].amountWithheld = ((this.purchaseOrder.atc[0].taxRate) / 100) * this.purchaseOrder.amountDue
+          },
+
+          amountTotal(){
+              if (this.amountPaid == this.amountTotal){
+                  this.purchaseOrder.paymentPeriod = 'Full Payment'
+              } else {
+                  this.purchaseOrder.paymentPeriod = 'Partial Payment'
+              }
+          },
+
+          amountPaid(){
+              if (this.amountPaid == this.amountTotal){
+                  this.purchaseOrder.paymentPeriod = 'Full Payment'
+              } else {
+                  this.purchaseOrder.paymentPeriod = 'Partial Payment'
+              }
+          },
+          amountWithheld(){
+              this.purchaseOrder.amountTotal = this.purchaseOrder.amountDue - (this.amountWithheld.reduce((a,b)=>Number(a)+Number(b),0)).toFixed(5)
+              this.purchaseOrder.taxPeso = (Number(this.amountTotal) * Number(this.taxRate/100))
+              this.purchaseOrder.withholdingTax = (this.amountWithheld.reduce((a,b)=>Number(a)+Number(b),0)).toFixed(5)
+          },
+          taxRate(){
+              this.purchaseOrder.taxPeso = (Number(this.amountTotal) * Number(this.taxRate/100))
+              this.purchaseOrder.withholdingTax = (this.amountWithheld.reduce((a,b)=>Number(a)+Number(b),0)).toFixed(5)
+          }
+      },
+
+      methods:{
+
+          checkForm(e){
+              var success1 = false
+              var success2 = false
+              if (
+                  this.purchaseOrder.code &&
+                  this.purchaseOrder.date &&
+                  this.purchaseOrder.vendor &&
+                  this.purchaseOrder.amountPaid &&
+                  this.purchaseOrder.paymentMethod &&
+                  this.purchaseOrder.paymentPeriod &&
+                  this.purchaseOrder.taxType &&
+                  this.purchaseOrder.taxRate
+                  )
+              {
+                  for(var item of this.purchaseOrder.items){
+                      console.log(item.type, item.code, item.quantity, item.vatable, item.totalCost)
+                      if(
+                          item.type &&
+                          item.code &&
+                          item.quantity &&
+                          item.vatable &&
+                          item.totalCost
+                      )
+                      {
+                          success1=true
+                          console.log('i was here', success1)
+                      } else {
+                          success1 = false
+                          break
+                      }
+                  }
+                  for(var item of this.purchaseOrder.atc){
+                      if(
+                          item.code &&
+                          item.amount &&
+                          item.taxRate &&
+                          item.amountWithheld
+                      )
+                      {
+                          success2=true
+                          console.log('i was here 2', success2)
+                      } else {
+                          success2=false
+                          break
+                      }
+                  }
+                  if(success1 && success2){
+                      this.submit()
+                      return
+                  }
+              }
+              this.errors = []
+              if (!this.purchaseOrder.code){
+                  this.errors.push('Code Required')
+              }
+              if (!this.purchaseOrder.date){
+                  this.errors.push('Date Required')
+              }
+              if (!this.purchaseOrder.vendor){
+                  this.errors.push('Vendor Required')
+              }
+              if (!this.purchaseOrder.amountPaid){
+                  this.errors.push('Amount Paid Required')
+              }
+              if (!this.purchaseOrder.paymentMethod){
+                  this.errors.push("Payment Method Required")
+              }
+              if (!this.purchaseOrder.paymentPeriod){
+                  this.errors.push('Payment Period Required')
+              }
+              if (!this.purchaseOrder.taxType){
+                  this.errors.push('Tax Type Required')
+              }
+              if (!this.purchaseOrder.taxRate){
+                  this.errors.push('Tax Rate Required')
+              }
+
+              this.purchaseOrder.items.forEach((item, index)=>{
+                  if(!item.type){
+                      this.errors.push('Item Type Required at index: ' + String(index+1))
+                  }
+                  if(!item.code){
+                      this.errors.push('Item Code Required at index: ' + String(index+1))
+                  }
+                  if(!item.quantity){
+                      this.errors.push('Item Quantity Required at index: ' + String(index+1))
+                  }
+                  if(!item.vatable){
+                      this.errors.push('Purchasing Price Required at index: ' + String(index+1))
+                  }
+                  if(!item.totalCost){
+                      this.errors.push('Total Cost Required at index: ' + String(index+1))
+                  }
+              })
+
+              this.purchaseOrder.atc.forEach((item, index)=>{
+                  if(!item.code){
+                      this.errors.push('ATC Code Required at index: ' + String(index+1))
+                  }
+                  if(!item.amount){
+                      this.errors.push('ATC Amount Required at index: ' + String(index+1))
+                  }
+                  if(!item.taxRate){
+                      this.errors.push('ATC Tax Rate Required at index: ' + String(index+1))
+                  }
+                  if(!item.amountWithheld){
+                      this.errors.push('ATC Amount Withheld Required at index: ' + String(index+1))
+                  }
+              })
+
+              Swal.fire({
+                  title: "Unfilled Inputs",
+                  html: this.errors.join('<br>'),
+                  icon: 'warning'
+              })
+          },
+          
+          formatPrice(val){
+              val = Number(val).toFixed(2)
+              var num = val.replace(/,/gi, "");
+              var num1 = num.split('.')
+              var num2 = num1[0].split(/(?=(?:\d{3})+$)/).join(",");
+              val = (num1[1] === undefined ? num2 : num2 + "." + num1[1])
+              return val
+          },
+
+          addLine(){
+              this.purchaseOrder.items.push({
+                  type: '',
+                  code: '',
+                  remaining: null,
+                  quantity: null,
+                  vatable: 0.00,
+                  inputVAT: 0,
+                  totalCost: null
+              })
+          },
+
+          addATC(){
+              this.purchaseOrder.atc.push({
+                  code: '',
+                  amount: Number(this.amountDue).toFixed(2),
+                  taxRate: 0,
+                  amountWithheld: 0,
+              })
+          },
+
+          getMerchRemaining(id, index){
+              item = this.merchandiseInventory.find(x=>x.id==id)
+              this.purchaseOrder.items[index].remaining = item.qtyA
+          },
+
+          onForTotalCost(index){
+              row = this.purchaseOrder.items[index]
+              row.totalCost = Number(row.vatable * row.quantity).toFixed(4)
+          },
+
+          remove (index) {
+              this.$delete(this.purchaseOrder.items, index)
+          },
+          submit(){
+              //if(Number(this.purchaseOrder.amountTotal) >= Number(this.purchaseOrder.amountPaid)){
+              //    axios.post('/save-purchase-order/', this.purchaseOrder, this.config)
+              //    .then(res=>res.data==0?location.reload():'')
+              //} else {
+              //    Swal.fire({
+              //        title: 'Something went wrong',
+              //        html: "Total should be less than or equal to Amount Due.",
+              //        icon: 'warning'
+              //    })
+              //}
+              
+          },
+          setATCRate(code, index){
+              object = this.atcList.find(x=>x.id==code)
+              this.purchaseOrder.atc[index].taxRate = ((object.rate)*100).toFixed(2)
+
+              this.purchaseOrder.atc[index].amountWithheld = (((this.purchaseOrder.atc[index].taxRate)/100) * this.purchaseOrder.atc[index].amount).toFixed(2)
+          }
+      },
+  })
+</script>
+<!-- END SCRIPT -->
+{% endblock %}
